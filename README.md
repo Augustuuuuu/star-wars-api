@@ -190,9 +190,54 @@ curl "https://SEU_GATEWAY_URL/explorar?tipo=films&termo=Empire"
 }
 ```
 
-## 🧪 Testes Locais
+## 🧪 Testes
 
-Para testar localmente antes do deploy:
+### Executar Testes Unitários
+
+O projeto inclui testes unitários abrangentes usando pytest:
+
+```bash
+# Instalar dependências (incluindo dependências de teste)
+cd starwars-function
+pip install -r requirements.txt
+
+# Executar todos os testes
+pytest
+
+# Executar testes com output detalhado
+pytest -v
+
+# Executar testes com cobertura de código
+pytest --cov=main --cov-report=html
+
+# Executar um teste específico
+pytest test_main.py::TestFetchFromSwapi::test_success_first_attempt
+```
+
+### Estrutura de Testes
+
+Os testes estão organizados em duas classes principais:
+
+- **TestFetchFromSwapi**: Testa a função auxiliar `fetch_from_swapi()`
+  - Sucesso na primeira tentativa
+  - Retry em caso de timeout
+  - Retry em caso de erro de conexão
+  - Retry em caso de HTTP 5xx
+  - Não retry em caso de HTTP 4xx
+  - Falha após todas as tentativas
+  - Busca com parâmetros de pesquisa
+
+- **TestStarwarsHandler**: Testa o handler principal `starwars_handler()`
+  - Requisição OPTIONS (CORS)
+  - Validação de parâmetros (tipo ausente, inválido, etc.)
+  - Validação de termo (caracteres inválidos, muito longo, vazio)
+  - Sucesso com e sem filtro
+  - Tratamento de erros da SWAPI
+  - Todos os tipos de recursos
+
+### Testes Locais da API
+
+Para testar a API localmente antes do deploy:
 
 ```bash
 # Instalar dependências
@@ -214,6 +259,8 @@ star-wars-api/
 ├── LICENSE                            # Licença do projeto
 ├── starwars-function/
 │   ├── main.py                        # Código principal da Cloud Function
+│   ├── test_main.py                   # Testes unitários
+│   ├── pytest.ini                     # Configuração do pytest
 │   ├── requirements.txt               # Dependências Python
 │   └── openapi2-functions.yaml       # Especificação OpenAPI para API Gateway
 ```
@@ -222,8 +269,14 @@ star-wars-api/
 
 ### Dependências
 
+**Produção:**
 - `functions-framework==3.*`: Framework para desenvolvimento de Cloud Functions
 - `requests`: Biblioteca para requisições HTTP
+
+**Desenvolvimento/Testes:**
+- `pytest==7.4.3`: Framework de testes
+- `pytest-mock==3.12.0`: Mocking para testes
+- `pytest-cov==4.1.0`: Cobertura de código
 
 ### Funcionalidades Implementadas
 
@@ -240,6 +293,9 @@ star-wars-api/
 - Implementa retry automático para falhas temporárias de rede
 - Validação de parâmetros com limites de tamanho
 - Headers CORS configurados para permitir acesso via browser
+- Logging estruturado para melhor observabilidade
+- Type hints para melhor suporte de IDE e detecção de erros
+- Testes unitários com cobertura abrangente usando pytest
 
 ## 🤝 Contribuindo
 

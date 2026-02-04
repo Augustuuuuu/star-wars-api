@@ -1,8 +1,18 @@
 import functions_framework
 import requests
-from flask import jsonify
+from flask import jsonify, Request
 import time
 import re
+import logging
+from typing import Optional, Dict, Any, Tuple
+
+# Configuração do logger estruturado
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # URL base da API do Star Wars
 SWAPI_BASE_URL = "https://swapi.dev/api"
@@ -12,7 +22,7 @@ MAX_RETRIES = 3
 RETRY_DELAY = 1  # segundos
 RETRY_BACKOFF = 2  # multiplicador exponencial
 
-def fetch_from_swapi(resource, params=None):
+def fetch_from_swapi(resource: str, params: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
     """
     Função auxiliar para consultar a SWAPI com retry automático.
     
@@ -27,40 +37,51 @@ def fetch_from_swapi(resource, params=None):
     
     for attempt in range(MAX_RETRIES):
         try:
+            logger.info(f"Consultando SWAPI: {resource} (tentativa {attempt + 1}/{MAX_RETRIES})")
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()  # Levanta erro para status 4xx/5xx
+            logger.info(f"Sucesso ao consultar SWAPI: {resource}")
             return response.json()
         except requests.exceptions.Timeout:
             if attempt < MAX_RETRIES - 1:
                 wait_time = RETRY_DELAY * (RETRY_BACKOFF ** attempt)
-                print(f"Timeout na tentativa {attempt + 1}/{MAX_RETRIES}. Aguardando {wait_time}s antes de tentar novamente...")
+                logger.warning(
+                    f"Timeout na tentativa {attempt + 1}/{MAX_RETRIES} para {resource}. "
+                    f"Aguardando {wait_time}s antes de tentar novamente."
+                )
                 time.sleep(wait_time)
             else:
-                print(f"Erro: Timeout após {MAX_RETRIES} tentativas")
+                logger.error(f"Timeout após {MAX_RETRIES} tentativas para {resource}")
                 return None
         except requests.exceptions.ConnectionError:
             if attempt < MAX_RETRIES - 1:
                 wait_time = RETRY_DELAY * (RETRY_BACKOFF ** attempt)
-                print(f"Erro de conexão na tentativa {attempt + 1}/{MAX_RETRIES}. Aguardando {wait_time}s antes de tentar novamente...")
+                logger.warning(
+                    f"Erro de conexão na tentativa {attempt + 1}/{MAX_RETRIES} para {resource}. "
+                    f"Aguardando {wait_time}s antes de tentar novamente."
+                )
                 time.sleep(wait_time)
             else:
-                print(f"Erro: Falha de conexão após {MAX_RETRIES} tentativas")
+                logger.error(f"Falha de conexão após {MAX_RETRIES} tentativas para {resource}")
                 return None
         except requests.exceptions.HTTPError as e:
             # Erros 4xx não devem ser retentados (erro do cliente)
             if 400 <= e.response.status_code < 500:
-                print(f"Erro HTTP do cliente: {e.response.status_code}")
+                logger.error(f"Erro HTTP do cliente ({e.response.status_code}) para {resource}: {e}")
                 return None
             # Erros 5xx podem ser retentados
             elif attempt < MAX_RETRIES - 1:
                 wait_time = RETRY_DELAY * (RETRY_BACKOFF ** attempt)
-                print(f"Erro HTTP do servidor ({e.response.status_code}) na tentativa {attempt + 1}/{MAX_RETRIES}. Aguardando {wait_time}s...")
+                logger.warning(
+                    f"Erro HTTP do servidor ({e.response.status_code}) na tentativa {attempt + 1}/{MAX_RETRIES} "
+                    f"para {resource}. Aguardando {wait_time}s..."
+                )
                 time.sleep(wait_time)
             else:
-                print(f"Erro: Falha HTTP após {MAX_RETRIES} tentativas")
+                logger.error(f"Falha HTTP após {MAX_RETRIES} tentativas para {resource}")
                 return None
         except requests.exceptions.RequestException as e:
-            print(f"Erro ao conectar com SWAPI: {e}")
+            logger.error(f"Erro ao conectar com SWAPI para {resource}: {e}")
             if attempt < MAX_RETRIES - 1:
                 wait_time = RETRY_DELAY * (RETRY_BACKOFF ** attempt)
                 time.sleep(wait_time)
@@ -70,17 +91,18 @@ def fetch_from_swapi(resource, params=None):
     return None
 
 @functions_framework.http
-def starwars_handler(request):
+def starwars_handler(request: Request) -> Tuple[Any, int, Dict[str, str]]:
     """
     HTTP Cloud Function.
     Args:
-        request (flask.Request): O objeto de requisição.
+        request: O objeto de requisição Flask.
     Returns:
-        O objeto de resposta contendo os dados filtrados ou erro.
+        Tupla contendo (resposta, código_status, headers).
     """
     
     # CORS Headers (Boa prática para permitir acesso via browser/front-end)
     if request.method == 'OPTIONS':
+        logger.info("Requisição OPTIONS (CORS preflight)")
         headers = {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET',
@@ -90,6 +112,7 @@ def starwars_handler(request):
         return ('', 204, headers)
 
     headers = {'Access-Control-Allow-Origin': '*'}
+    logger.info(f"Requisição recebida: {request.method} {request.path}")
 
     # 1. Captura e Validação de Parâmetros
     # O endpoint esperado será algo como: /explorar?tipo=people&termo=Luke
@@ -102,6 +125,7 @@ def starwars_handler(request):
     
     # Validar se o tipo foi fornecido
     if not resource_type:
+        logger.warning("Requisição sem parâmetro 'tipo'")
         return jsonify({
             "erro": "Parâmetro 'tipo' é obrigatório.",
             "tipos_disponiveis": valid_resources
@@ -109,6 +133,7 @@ def starwars_handler(request):
     
     # Validar se o tipo é uma string
     if not isinstance(resource_type, str):
+        logger.warning(f"Parâmetro 'tipo' não é string: {type(resource_type)}")
         return jsonify({
             "erro": "Parâmetro 'tipo' deve ser uma string.",
             "tipos_disponiveis": valid_resources
@@ -117,6 +142,7 @@ def starwars_handler(request):
     # Validar se o tipo está na lista de recursos válidos
     resource_type = resource_type.strip().lower()
     if resource_type not in valid_resources:
+        logger.warning(f"Parâmetro 'tipo' inválido recebido: '{resource_type}'")
         return jsonify({
             "erro": f"Parâmetro 'tipo' inválido: '{resource_type}'.",
             "tipos_disponiveis": valid_resources
@@ -126,6 +152,7 @@ def starwars_handler(request):
     if search_query is not None:
         # Validar se o termo é uma string
         if not isinstance(search_query, str):
+            logger.warning(f"Parâmetro 'termo' não é string: {type(search_query)}")
             return jsonify({
                 "erro": "Parâmetro 'termo' deve ser uma string."
             }), 400, headers
@@ -135,6 +162,7 @@ def starwars_handler(request):
         
         # Validar se o termo não está vazio após remover espaços
         if not search_query:
+            logger.warning("Parâmetro 'termo' vazio ou contém apenas espaços")
             return jsonify({
                 "erro": "Parâmetro 'termo' não pode estar vazio ou conter apenas espaços."
             }), 400, headers
@@ -142,6 +170,7 @@ def starwars_handler(request):
         # Validar comprimento máximo do termo (limite de 100 caracteres)
         MAX_SEARCH_LENGTH = 100
         if len(search_query) > MAX_SEARCH_LENGTH:
+            logger.warning(f"Parâmetro 'termo' excede limite: {len(search_query)} caracteres")
             return jsonify({
                 "erro": f"Parâmetro 'termo' excede o limite de {MAX_SEARCH_LENGTH} caracteres.",
                 "tamanho_atual": len(search_query)
@@ -150,6 +179,7 @@ def starwars_handler(request):
         # Validar caracteres especiais perigosos (proteção básica contra injection)
         # Permitir apenas letras, números, espaços e alguns caracteres especiais comuns
         if not re.match(r'^[a-zA-Z0-9\s\-_\.]+$', search_query):
+            logger.warning(f"Parâmetro 'termo' contém caracteres inválidos: '{search_query}'")
             return jsonify({
                 "erro": "Parâmetro 'termo' contém caracteres inválidos. Use apenas letras, números, espaços e os caracteres: - _ ."
             }), 400, headers
@@ -161,9 +191,11 @@ def starwars_handler(request):
         swapi_params['search'] = search_query
 
     # 3. Execução
+    logger.info(f"Buscando dados: tipo={resource_type}, termo={search_query or 'nenhum'}")
     data = fetch_from_swapi(resource_type, swapi_params)
 
     if data is None:
+        logger.error(f"Falha ao obter dados da SWAPI para {resource_type}")
         return jsonify({"erro": "Falha ao obter dados da fonte externa."}), 502, headers
 
     # 4. Refinamento da Resposta (Agregando Valor)
@@ -171,6 +203,7 @@ def starwars_handler(request):
     results = data.get('results', [])
     
     if not results:
+        logger.info(f"Nenhum resultado encontrado para {resource_type} com termo '{search_query or 'nenhum'}'")
         return jsonify({"mensagem": "Nenhum registro encontrado para os critérios."}), 404, headers
 
     # Retorna os dados encontrados com metadados básicos
@@ -180,4 +213,5 @@ def starwars_handler(request):
         "resultados": results
     }
 
+    logger.info(f"Sucesso: {len(results)} resultado(s) encontrado(s) para {resource_type}")
     return jsonify(response_payload), 200, headers
