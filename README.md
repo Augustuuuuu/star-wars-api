@@ -1,2 +1,1 @@
-# star-wars-api
 
