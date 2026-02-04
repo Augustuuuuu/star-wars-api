@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Wars API Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #1e3c72;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 200px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border-left: 4px solid #ff4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            border-color: #ffd700;
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+        }
+
+        .result-card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .result-card p {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .result-card strong {
+            color: #ffd700;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .pagination-info {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            opacity: 0.8;
+        }
+
+        .empty-state h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⭐ Star Wars API Explorer</h1>
+            <p class="subtitle">Explore o universo Star Wars de forma interativa</p>
+        </header>
+
+        <div class="search-panel">
+            <form id="searchForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tipo">Tipo de Recurso:</label>
+                        <select id="tipo" name="tipo" required>
+                            <option value="">Selecione...</option>
+                            <option value="people">Personagens</option>
+                            <option value="planets">Planetas</option>
+                            <option value="starships">Naves Espaciais</option>
+                            <option value="films">Filmes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="termo">Buscar (opcional):</label>
+                        <input type="text" id="termo" name="termo" placeholder="Ex: Luke, Tatooine, Falcon">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ordenar_por">Ordenar por:</label>
+                        <select id="ordenar_por" name="ordenar_por">
+                            <option value="">Nenhuma ordenação</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ordem">Ordem:</label>
+                        <select id="ordem" name="ordem">
+                            <option value="asc">Crescente</option>
+                            <option value="desc">Decrescente</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="limite">Itens por página:</label>
+                        <input type="number" id="limite" name="limite" value="10" min="1" max="100">
+                    </div>
+                </div>
+
+                <button type="submit">🔍 Buscar</button>
+            </form>
+        </div>
+
+        <div class="results-container">
+            <div id="loading" class="loading" style="display: none;">
+                Carregando...
+            </div>
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://SEU_GATEWAY_URL'; // Substitua pela URL do seu API Gateway
+        
+        // Configuração de campos de ordenação por tipo
+        const sortFields = {
+            people: [
+                { value: 'name', label: 'Nome' },
+                { value: 'height', label: 'Altura' },
+                { value: 'mass', label: 'Peso' },
+                { value: 'birth_year', label: 'Ano de Nascimento' }
+            ],
+            planets: [
+                { value: 'name', label: 'Nome' },
+                { value: 'diameter', label: 'Diâmetro' },
+                { value: 'population', label: 'População' },
+                { value: 'rotation_period', label: 'Período de Rotação' }
+            ],
+            starships: [
+                { value: 'name', label: 'Nome' },
+                { value: 'length', label: 'Comprimento' },
+                { value: 'crew', label: 'Tripulação' },
+                { value: 'passengers', label: 'Passageiros' }
+            ],
+            films: [
+                { value: 'title', label: 'Título' },
+                { value: 'episode_id', label: 'Episódio' },
+                { value: 'release_date', label: 'Data de Lançamento' }
+            ]
+        };
+
+        let currentPage = 1;
+        let currentParams = {};
+
+        // Atualizar campos de ordenação quando o tipo muda
+        document.getElementById('tipo').addEventListener('change', function() {
+            const tipo = this.value;
+            const ordenarPor = document.getElementById('ordenar_por');
+            
+            ordenarPor.innerHTML = '<option value="">Nenhuma ordenação</option>';
+            
+            if (tipo && sortFields[tipo]) {
+                sortFields[tipo].forEach(field => {
+                    const option = document.createElement('option');
+                    option.value = field.value;
+                    option.textContent = field.label;
+                    ordenarPor.appendChild(option);
+                });
+            }
+        });
+
+        // Submeter formulário
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            currentPage = 1;
+            search();
+        });
+
+        async function search() {
+            const tipo = document.getElementById('tipo').value;
+            const termo = document.getElementById('termo').value;
+            const ordenarPor = document.getElementById('ordenar_por').value;
+            const ordem = document.getElementById('ordem').value;
+            const limite = document.getElementById('limite').value;
+
+            if (!tipo) {
+                showError('Por favor, selecione um tipo de recurso.');
+                return;
+            }
+
+            currentParams = { tipo, termo, ordenarPor, ordem, limite };
+
+            showLoading();
+            hideError();
+            hideResults();
+
+            try {
+                const params = new URLSearchParams({
+                    tipo: tipo,
+                    pagina: currentPage.toString(),
+                    limite: limite || '10'
+                });
+
+                if (termo) params.append('termo', termo);
+                if (ordenarPor) params.append('ordenar_por', ordenarPor);
+                if (ordem) params.append('ordem', ordem);
+
+                const response = await fetch(`${API_BASE_URL}/explorar?${params}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.erro || data.mensagem || 'Erro ao buscar dados');
+                }
+
+                displayResults(data);
+            } catch (error) {
+                showError(`Erro: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (!data.resultados || data.resultados.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="empty-state">
+                        <h2>Nenhum resultado encontrado</h2>
+                        <p>Tente ajustar seus filtros de busca.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="info-bar">
+                    <div>
+                        <strong>Total encontrado:</strong> ${data.total_encontrado || data.resultados.length}
+                    </div>
+                    <div>
+                        <strong>Página:</strong> ${data.pagina_atual || 1} de ${data.total_paginas || 1}
+                    </div>
+                </div>
+                <div class="results-grid">
+            `;
+
+            data.resultados.forEach(item => {
+                html += createCard(item, data.categoria);
+            });
+
+            html += '</div>';
+
+            // Adicionar paginação se necessário
+            if (data.total_paginas > 1) {
+                html += createPagination(data);
+            }
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+
+        function createCard(item, categoria) {
+            let content = `<div class="result-card"><h3>${item.name || item.title || 'Sem nome'}</h3>`;
+
+            if (categoria === 'people') {
+                content += `
+                    <p><strong>Altura:</strong> ${item.height || 'N/A'}</p>
+                    <p><strong>Peso:</strong> ${item.mass || 'N/A'}</p>
+                    <p><strong>Ano de Nascimento:</strong> ${item.birth_year || 'N/A'}</p>
+                    <p><strong>Gênero:</strong> ${item.gender || 'N/A'}</p>
+                `;
+            } else if (categoria === 'planets') {
+                content += `
+                    <p><strong>Diâmetro:</strong> ${item.diameter || 'N/A'}</p>
+                    <p><strong>População:</strong> ${item.population || 'N/A'}</p>
+                    <p><strong>Clima:</strong> ${item.climate || 'N/A'}</p>
+                    <p><strong>Terreno:</strong> ${item.terrain || 'N/A'}</p>
+                `;
+            } else if (categoria === 'starships') {
+                content += `
+                    <p><strong>Modelo:</strong> ${item.model || 'N/A'}</p>
+                    <p><strong>Fabricante:</strong> ${item.manufacturer || 'N/A'}</p>
+                    <p><strong>Tripulação:</strong> ${item.crew || 'N/A'}</p>
+                    <p><strong>Passageiros:</strong> ${item.passengers || 'N/A'}</p>
+                `;
+            } else if (categoria === 'films') {
+                content += `
+                    <p><strong>Episódio:</strong> ${item.episode_id || 'N/A'}</p>
+                    <p><strong>Diretor:</strong> ${item.director || 'N/A'}</p>
+                    <p><strong>Produtor:</strong> ${item.producer || 'N/A'}</p>
+                    <p><strong>Data de Lançamento:</strong> ${item.release_date || 'N/A'}</p>
+                `;
+            }
+
+            content += '</div>';
+            return content;
+        }
+
+        function createPagination(data) {
+            const totalPages = data.total_paginas;
+            const currentPageNum = data.pagina_atual;
+
+            let html = '<div class="pagination">';
+
+            if (currentPageNum > 1) {
+                html += `<button onclick="goToPage(${currentPageNum - 1})">← Anterior</button>`;
+            }
+
+            html += `<div class="pagination-info">Página ${currentPageNum} de ${totalPages}</div>`;
+
+            if (currentPageNum < totalPages) {
+                html += `<button onclick="goToPage(${currentPageNum + 1})">Próxima →</button>`;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            search();
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: Star Wars Explorer API
   description: API para exploração de dados do universo Star Wars via GCP.
-  version: 1.0.0
+  version: 2.0.0
 schemes:
   - https
 produces:
@@ -10,7 +10,7 @@ produces:
 paths:
   /explorar:
     get:
-      summary: Busca informações de Star Wars
+      summary: Busca informações de Star Wars com filtros, ordenação e paginação
       operationId: getStarWarsData
       parameters:
         - in: query
@@ -18,17 +18,147 @@ paths:
           type: string
           required: true
           description: O tipo de recurso (people, planets, starships, films).
+          enum: [people, planets, starships, films]
         - in: query
           name: termo
           type: string
           required: false
-          description: Termo para filtro (nome do personagem, planeta, etc).
+          description: Termo para filtro (nome do personagem, planeta, etc). Máximo 100 caracteres.
+        - in: query
+          name: ordenar_por
+          type: string
+          required: false
+          description: Campo para ordenação. Para people: name, height, mass, birth_year. Para planets: name, diameter, population. Para starships: name, length, crew. Para films: title, episode_id, release_date.
+        - in: query
+          name: ordem
+          type: string
+          required: false
+          default: asc
+          enum: [asc, desc]
+          description: Ordem de classificação (ascendente ou descendente).
+        - in: query
+          name: pagina
+          type: integer
+          required: false
+          default: 1
+          description: Número da página (começa em 1).
+        - in: query
+          name: limite
+          type: integer
+          required: false
+          default: 10
+          minimum: 1
+          maximum: 100
+          description: Número de itens por página (máximo 100).
       x-google-backend:
         address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-backend
       responses:
         '200':
-          description: Sucesso
+          description: Sucesso - Dados retornados com paginação
           schema:
             type: object
+            properties:
+              categoria:
+                type: string
+              total_encontrado:
+                type: integer
+              total_na_pagina:
+                type: integer
+              pagina_atual:
+                type: integer
+              total_paginas:
+                type: integer
+              limite_por_pagina:
+                type: integer
+              resultados:
+                type: array
         '400':
-          description: Requisição Inválida
+          description: Requisição Inválida - Parâmetros incorretos
+        '404':
+          description: Nenhum resultado encontrado
+        '502':
+          description: Erro ao conectar com a API externa
+  /personagens-filme:
+    get:
+      summary: Busca personagens de um filme específico
+      operationId: getPersonagensFilme
+      parameters:
+        - in: query
+          name: filme_id
+          type: integer
+          required: true
+          description: ID do filme na SWAPI (1-6).
+      x-google-backend:
+        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-backend
+      responses:
+        '200':
+          description: Sucesso - Lista de personagens do filme
+          schema:
+            type: object
+            properties:
+              filme:
+                type: object
+              total_personagens:
+                type: integer
+              personagens:
+                type: array
+        '400':
+          description: Parâmetro filme_id ausente
+        '404':
+          description: Filme não encontrado
+  /naves-personagem:
+    get:
+      summary: Busca naves espaciais de um personagem específico
+      operationId: getNavesPersonagem
+      parameters:
+        - in: query
+          name: personagem_id
+          type: integer
+          required: true
+          description: ID do personagem na SWAPI.
+      x-google-backend:
+        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-backend
+      responses:
+        '200':
+          description: Sucesso - Lista de naves do personagem
+          schema:
+            type: object
+            properties:
+              personagem:
+                type: object
+              total_naves:
+                type: integer
+              naves:
+                type: array
+        '400':
+          description: Parâmetro personagem_id ausente
+        '404':
+          description: Personagem não encontrado
+  /planetas-filme:
+    get:
+      summary: Busca planetas de um filme específico
+      operationId: getPlanetasFilme
+      parameters:
+        - in: query
+          name: filme_id
+          type: integer
+          required: true
+          description: ID do filme na SWAPI (1-6).
+      x-google-backend:
+        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-backend
+      responses:
+        '200':
+          description: Sucesso - Lista de planetas do filme
+          schema:
+            type: object
+            properties:
+              filme:
+                type: object
+              total_planetas:
+                type: integer
+              planetas:
+                type: array
+        '400':
+          description: Parâmetro filme_id ausente
+        '404':
+          description: Filme não encontrado

@@ -85,10 +85,40 @@ https://SEU_GATEWAY_URL/explorar
 
 ### Parâmetros
 
+#### Endpoint `/explorar`
+
 | Parâmetro | Tipo | Obrigatório | Descrição | Valores Aceitos |
 |-----------|------|-------------|-----------|-----------------|
 | `tipo` | string | Sim | Tipo de recurso a consultar | `people`, `planets`, `starships`, `films` |
 | `termo` | string | Não | Termo de busca (nome, título, etc.) | Qualquer string (máx. 100 caracteres) |
+| `ordenar_por` | string | Não | Campo para ordenação | Ver campos disponíveis abaixo |
+| `ordem` | string | Não | Ordem de classificação | `asc` (padrão) ou `desc` |
+| `pagina` | integer | Não | Número da página | 1 ou superior (padrão: 1) |
+| `limite` | integer | Não | Itens por página | 1-100 (padrão: 10) |
+
+**Campos de ordenação disponíveis:**
+- **people**: `name`, `height`, `mass`, `birth_year`
+- **planets**: `name`, `diameter`, `population`, `rotation_period`, `orbital_period`
+- **starships**: `name`, `length`, `crew`, `passengers`, `cargo_capacity`, `cost_in_credits`
+- **films**: `title`, `episode_id`, `release_date`
+
+#### Endpoint `/personagens-filme`
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| `filme_id` | integer | Sim | ID do filme na SWAPI (1-6) |
+
+#### Endpoint `/naves-personagem`
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| `personagem_id` | integer | Sim | ID do personagem na SWAPI |
+
+#### Endpoint `/planetas-filme`
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| `filme_id` | integer | Sim | ID do filme na SWAPI (1-6) |
 
 ### Exemplos de Requisições
 
@@ -117,12 +147,36 @@ curl "https://SEU_GATEWAY_URL/explorar?tipo=starships&termo=Falcon"
 curl "https://SEU_GATEWAY_URL/explorar?tipo=films&termo=Empire"
 ```
 
-### Exemplo de Resposta de Sucesso
+#### Buscar com ordenação e paginação
+```bash
+curl "https://SEU_GATEWAY_URL/explorar?tipo=people&ordenar_por=height&ordem=desc&pagina=1&limite=5"
+```
+
+#### Buscar personagens de um filme
+```bash
+curl "https://SEU_GATEWAY_URL/personagens-filme?filme_id=1"
+```
+
+#### Buscar naves de um personagem
+```bash
+curl "https://SEU_GATEWAY_URL/naves-personagem?personagem_id=1"
+```
+
+#### Buscar planetas de um filme
+```bash
+curl "https://SEU_GATEWAY_URL/planetas-filme?filme_id=1"
+```
+
+### Exemplo de Resposta de Sucesso (com paginação)
 
 ```json
 {
   "categoria": "people",
-  "total_encontrado": 1,
+  "total_encontrado": 87,
+  "total_na_pagina": 10,
+  "pagina_atual": 1,
+  "total_paginas": 9,
+  "limite_por_pagina": 10,
   "resultados": [
     {
       "name": "Luke Skywalker",
@@ -251,12 +305,49 @@ functions-framework --target=starwars_handler --port=8080
 curl "http://localhost:8080?tipo=people&termo=Luke"
 ```
 
+## 🌐 Frontend Interativo
+
+O projeto inclui uma interface web interativa para explorar a API de forma visual.
+
+### Executar o Frontend
+
+1. **Configurar a URL da API:**
+   - Abra `frontend/index.html`
+   - Substitua `https://SEU_GATEWAY_URL` pela URL real do seu API Gateway
+
+2. **Abrir no navegador:**
+   - Abra o arquivo `frontend/index.html` diretamente no navegador
+   - Ou sirva via servidor HTTP local:
+     ```bash
+     # Python 3
+     cd frontend
+     python -m http.server 8000
+     
+     # Node.js (se tiver http-server instalado)
+     npx http-server -p 8000
+     ```
+
+3. **Acessar:**
+   - Abra `http://localhost:8000` no navegador
+
+### Funcionalidades do Frontend
+
+- ✅ Busca interativa de recursos (personagens, planetas, naves, filmes)
+- ✅ Filtros por termo de busca
+- ✅ Ordenação de resultados
+- ✅ Paginação de resultados
+- ✅ Interface responsiva e moderna
+- ✅ Visualização em cards dos resultados
+
 ## 📁 Estrutura do Projeto
 
 ```
 star-wars-api/
 ├── README.md                          # Documentação do projeto
+├── ARCHITECTURE.md                    # Documentação de arquitetura técnica
 ├── LICENSE                            # Licença do projeto
+├── frontend/
+│   └── index.html                     # Interface web interativa
 ├── starwars-function/
 │   ├── main.py                        # Código principal da Cloud Function
 │   ├── test_main.py                   # Testes unitários
@@ -280,22 +371,50 @@ star-wars-api/
 
 ### Funcionalidades Implementadas
 
+**Backend:**
 - ✅ Consulta de personagens, planetas, naves e filmes
 - ✅ Busca por termo específico
-- ✅ Validação de parâmetros
-- ✅ Tratamento de erros com retry automático
+- ✅ Ordenação de resultados por campo específico
+- ✅ Paginação de resultados
+- ✅ Consultas correlacionadas (personagens de filme, naves de personagem, planetas de filme)
+- ✅ Validação de parâmetros robusta
+- ✅ Tratamento de erros com retry automático e backoff exponencial
 - ✅ Suporte a CORS
 - ✅ Respostas estruturadas com metadados
+- ✅ Logging estruturado
+- ✅ Type hints em todas as funções
+- ✅ Testes unitários abrangentes
+
+**Frontend:**
+- ✅ Interface web interativa e responsiva
+- ✅ Busca e filtros funcionais
+- ✅ Ordenação visual
+- ✅ Paginação de resultados
+- ✅ Visualização em cards dos dados
 
 ## 📝 Notas Técnicas
 
 - A API utiliza a SWAPI (https://swapi.dev/) como fonte de dados
-- Implementa retry automático para falhas temporárias de rede
-- Validação de parâmetros com limites de tamanho
+- Implementa retry automático com backoff exponencial para falhas temporárias de rede
+- Validação de parâmetros robusta com limites de tamanho e sanitização
 - Headers CORS configurados para permitir acesso via browser
 - Logging estruturado para melhor observabilidade
 - Type hints para melhor suporte de IDE e detecção de erros
 - Testes unitários com cobertura abrangente usando pytest
+- Arquitetura serverless escalável no GCP
+- Consultas correlacionadas com múltiplas requisições à SWAPI
+- Ordenação inteligente com tratamento de valores "unknown" e "n/a"
+
+## 📚 Documentação Adicional
+
+Para mais detalhes sobre a arquitetura técnica, decisões de design e diagramas, consulte o arquivo [ARCHITECTURE.md](ARCHITECTURE.md).
+- Arquitetura serverless escalável no GCP
+- Consultas correlacionadas com múltiplas requisições à SWAPI
+- Ordenação inteligente com tratamento de valores "unknown" e "n/a"
+
+## 📚 Documentação Adicional
+
+Para mais detalhes sobre a arquitetura técnica, decisões de design e diagramas, consulte o arquivo [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## 🤝 Contribuindo
 
