@@ -4,6 +4,7 @@ Testes unitários para a Cloud Function Star Wars API Explorer.
 import pytest
 from unittest.mock import Mock, patch
 import requests
+from flask import Flask
 from main import fetch_from_swapi, starwars_handler, MAX_RETRIES, RETRY_DELAY, RETRY_BACKOFF
 
 
@@ -120,51 +121,68 @@ class TestFetchFromSwapi:
 class TestStarwarsHandler:
     """Testes para a função starwars_handler."""
     
+    @pytest.fixture
+    def app(self):
+        """Cria uma aplicação Flask para contexto de teste."""
+        app = Flask(__name__)
+        return app
+    
     def create_mock_request(self, method='GET', args=None):
         """Cria um mock de request Flask."""
         mock_request = Mock()
         mock_request.method = method
         mock_request.path = '/explorar'
-        mock_request.args = Mock()
+        
+        # Criar um mock mais robusto para args
+        mock_args = Mock()
         if args:
-            mock_request.args.get = lambda key, default=None: args.get(key, default)
+            def get_arg(key, default=None):
+                return args.get(key, default)
+            mock_args.get = get_arg
         else:
-            mock_request.args.get = lambda key, default=None: default
+            def get_arg(key, default=None):
+                return default
+            mock_args.get = get_arg
+        
+        mock_request.args = mock_args
         return mock_request
     
-    def test_options_request(self):
+    def test_options_request(self, app):
         """Testa requisição OPTIONS (CORS preflight)."""
         mock_request = self.create_mock_request(method='OPTIONS')
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 204
         assert headers['Access-Control-Allow-Origin'] == '*'
         assert headers['Access-Control-Allow-Methods'] == 'GET'
     
-    def test_missing_tipo_parameter(self):
+    def test_missing_tipo_parameter(self, app):
         """Testa validação quando parâmetro 'tipo' está ausente."""
         mock_request = self.create_mock_request(args={})
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 400
         data = response.get_json()
         assert 'erro' in data
         assert "obrigatório" in data['erro'].lower()
     
-    def test_invalid_tipo_parameter(self):
+    def test_invalid_tipo_parameter(self, app):
         """Testa validação quando parâmetro 'tipo' é inválido."""
         mock_request = self.create_mock_request(args={'tipo': 'invalid'})
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 400
         data = response.get_json()
         assert 'erro' in data
         assert 'tipos_disponiveis' in data
     
-    def test_tipo_case_insensitive(self):
+    def test_tipo_case_insensitive(self, app):
         """Testa que o parâmetro 'tipo' é case-insensitive."""
         mock_request = self.create_mock_request(args={'tipo': 'PEOPLE'})
         
@@ -174,26 +192,28 @@ class TestStarwarsHandler:
                 'count': 1
             }
             
-            response, status_code, headers = starwars_handler(mock_request)
+            with app.app_context():
+                response, status_code, headers = starwars_handler(mock_request)
             
             assert status_code == 200
             mock_fetch.assert_called_once_with('people', {})
     
-    def test_invalid_termo_characters(self):
+    def test_invalid_termo_characters(self, app):
         """Testa validação de caracteres inválidos no parâmetro 'termo'."""
         mock_request = self.create_mock_request(args={
             'tipo': 'people',
             'termo': 'Luke<script>alert("xss")</script>'
         })
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 400
         data = response.get_json()
         assert 'erro' in data
         assert 'caracteres inválidos' in data['erro'].lower()
     
-    def test_termo_too_long(self):
+    def test_termo_too_long(self, app):
         """Testa validação de comprimento máximo do parâmetro 'termo'."""
         long_term = 'a' * 101  # 101 caracteres
         mock_request = self.create_mock_request(args={
@@ -201,28 +221,30 @@ class TestStarwarsHandler:
             'termo': long_term
         })
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 400
         data = response.get_json()
         assert 'erro' in data
         assert 'limite' in data['erro'].lower()
     
-    def test_termo_empty_string(self):
+    def test_termo_empty_string(self, app):
         """Testa validação quando 'termo' é string vazia."""
         mock_request = self.create_mock_request(args={
             'tipo': 'people',
             'termo': '   '  # apenas espaços
         })
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 400
         data = response.get_json()
         assert 'erro' in data
     
     @patch('main.fetch_from_swapi')
-    def test_success_without_filter(self, mock_fetch):
+    def test_success_without_filter(self, mock_fetch, app):
         """Testa sucesso sem filtro de busca."""
         mock_request = self.create_mock_request(args={'tipo': 'people'})
         mock_fetch.return_value = {
@@ -230,7 +252,8 @@ class TestStarwarsHandler:
             'count': 1
         }
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 200
         data = response.get_json()
@@ -240,7 +263,7 @@ class TestStarwarsHandler:
         mock_fetch.assert_called_once_with('people', {})
     
     @patch('main.fetch_from_swapi')
-    def test_success_with_filter(self, mock_fetch):
+    def test_success_with_filter(self, mock_fetch, app):
         """Testa sucesso com filtro de busca."""
         mock_request = self.create_mock_request(args={
             'tipo': 'people',
@@ -251,7 +274,8 @@ class TestStarwarsHandler:
             'count': 1
         }
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 200
         data = response.get_json()
@@ -260,7 +284,7 @@ class TestStarwarsHandler:
         mock_fetch.assert_called_once_with('people', {'search': 'Luke'})
     
     @patch('main.fetch_from_swapi')
-    def test_no_results_found(self, mock_fetch):
+    def test_no_results_found(self, mock_fetch, app):
         """Testa resposta quando não há resultados."""
         mock_request = self.create_mock_request(args={
             'tipo': 'people',
@@ -271,26 +295,28 @@ class TestStarwarsHandler:
             'count': 0
         }
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 404
         data = response.get_json()
         assert 'mensagem' in data
     
     @patch('main.fetch_from_swapi')
-    def test_swapi_error(self, mock_fetch):
+    def test_swapi_error(self, mock_fetch, app):
         """Testa tratamento de erro da SWAPI."""
         mock_request = self.create_mock_request(args={'tipo': 'people'})
         mock_fetch.return_value = None
         
-        response, status_code, headers = starwars_handler(mock_request)
+        with app.app_context():
+            response, status_code, headers = starwars_handler(mock_request)
         
         assert status_code == 502
         data = response.get_json()
         assert 'erro' in data
     
     @patch('main.fetch_from_swapi')
-    def test_all_resource_types(self, mock_fetch):
+    def test_all_resource_types(self, mock_fetch, app):
         """Testa que todos os tipos de recursos são aceitos."""
         mock_fetch.return_value = {'results': [], 'count': 0}
         
@@ -298,13 +324,14 @@ class TestStarwarsHandler:
         
         for resource_type in resource_types:
             mock_request = self.create_mock_request(args={'tipo': resource_type})
-            response, status_code, headers = starwars_handler(mock_request)
+            with app.app_context():
+                response, status_code, headers = starwars_handler(mock_request)
             
             # Deve retornar 404 (sem resultados) mas não erro de validação
             assert status_code in [200, 404]
             mock_fetch.assert_called_with(resource_type, {})
     
-    def test_termo_stripped(self):
+    def test_termo_stripped(self, app):
         """Testa que espaços em branco são removidos do 'termo'."""
         mock_request = self.create_mock_request(args={
             'tipo': 'people',
@@ -314,7 +341,8 @@ class TestStarwarsHandler:
         with patch('main.fetch_from_swapi') as mock_fetch:
             mock_fetch.return_value = {'results': [], 'count': 0}
             
-            starwars_handler(mock_request)
+            with app.app_context():
+                starwars_handler(mock_request)
             
             # Verifica que o termo foi passado sem espaços
             mock_fetch.assert_called_once_with('people', {'search': 'Luke'})
