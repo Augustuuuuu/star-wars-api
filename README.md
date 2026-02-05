@@ -5,6 +5,7 @@
 Aplicação para explorar dados de Star Wars usando a SWAPI, com backend em Cloud Functions (GCP) e um frontend em HTML/JS.
 
 **Principais funcionalidades:**
+
 - **Buscar recursos**: personagens, planetas, naves espaciais e filmes.
 - **Filtrar por termo**: pesquisar por nome ou título.
 - **Ordenar resultados**: por campos como altura, peso, população, data de lançamento etc.
@@ -23,19 +24,33 @@ Você não precisa subir nada para testar. Já existe uma instância publicada.
 
 ### 1.1. Testar direto no navegador
 
-Abra no navegador, por exemplo:
+Abra no navegador alguns exemplos prontos:
 
-- **Lista de personagens** (página 1, 10 itens):
+- **People**
 
-  `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&pagina=1&limite=10`
+  - Lista de personagens (página 1, 10 itens):`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&pagina=1&limite=10`
+  - Buscar por “Luke”:`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&termo=Luke`
+  - Ordenar por altura (maior para menor):`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&ordenar_por=height&ordem=desc&pagina=1&limite=10`
+  - Ordenar por ano de nascimento (crescente):
+    `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&ordenar_por=birth_year&ordem=asc&pagina=1&limite=10`
+- **Planets**
 
-- **Buscar por “Luke”**:
+  - Planetas com “Tat” no nome:`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=planets&termo=Tat`
+  - Ordenar por população (maior para menor):`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=planets&ordenar_por=population&ordem=desc&pagina=1&limite=10`
+  - Ordenar por diâmetro (crescente):
+    `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=planets&ordenar_por=diameter&ordem=asc&pagina=1&limite=10`
+- **Starships**
 
-  `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&termo=Luke`
+  - Naves com “Falcon” no nome:`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=starships&termo=Falcon`
+  - Ordenar por comprimento (maior para menor):`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=starships&ordenar_por=length&ordem=desc&pagina=1&limite=10`
+  - Ordenar por capacidade de carga (maior para menor):
+    `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=starships&ordenar_por=cargo_capacity&ordem=desc&pagina=1&limite=10`
+- **Films**
 
-- **Planetas com “Tat” no nome**:
-
-  `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=planets&termo=Tat`
+  - Todos os filmes (página 1):`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=films&pagina=1&limite=10`
+  - Ordenar por número do episódio (crescente):`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=films&ordenar_por=episode_id&ordem=asc`
+  - Ordenar por data de lançamento (mais recente primeiro):
+    `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=films&ordenar_por=release_date&ordem=desc`
 
 ### 1.2. Testar com o frontend deste projeto
 
@@ -45,9 +60,9 @@ Abra no navegador, por exemplo:
    ```js
    const API_BASE_URL = 'https://starwars-gateway-7mwhqkjo.uc.gateway.dev/';
    ```
-
 3. Abra o arquivo `frontend/index.html` no navegador.
 4. Na interface:
+
    - Escolha o tipo (Personagens, Planetas, Naves, Filmes).
    - (Opcional) Informe termo de busca, campo de ordenação, ordem e limite por página.
    - Clique em **Buscar** e use os botões de paginação.
@@ -71,10 +86,9 @@ curl "https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&orde
 
 ### 2.1. Endpoint principal: `/explorar`
 
-- **Base (minha instância):**  
-  `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar`
-
+- **Base (minha instância):**`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar`
 - **Parâmetros principais:**
+
   - **tipo** (obrigatório): `people`, `planets`, `starships`, `films`
   - **termo** (opcional): texto de busca (nome, título etc.)
   - **ordenar_por** (opcional):
@@ -116,11 +130,9 @@ Todos usando a mesma base: `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/`
 - **Personagens de um filme**
 
   `/personagens-filme?filme_id=1`
-
 - **Naves de um personagem**
 
   `/naves-personagem?personagem_id=1`
-
 - **Planetas de um filme**
 
   `/planetas-filme?filme_id=1`
@@ -134,6 +146,7 @@ Se quiser subir sua própria instância no GCP, o fluxo é:
 ### 3.1. Cloud Function
 
 Pré-requisitos:
+
 - Ter um projeto no GCP.
 - Ter o `gcloud` instalado e autenticado.
 
@@ -189,6 +202,7 @@ Depois é só usar essa URL como `API_BASE_URL` no `frontend/index.html`.
 ## 4. Visão geral da aplicação
 
 - **Backend**: `starwars-function/main.py`
+
   - Endpoint principal `/explorar` com:
     - Busca por termo.
     - Ordenação por campo.
@@ -197,8 +211,8 @@ Depois é só usar essa URL como `API_BASE_URL` no `frontend/index.html`.
     - `/personagens-filme`
     - `/naves-personagem`
     - `/planetas-filme`
-
 - **Frontend**: `frontend/index.html`
+
   - Página única que consome a URL do API Gateway.
   - Permite escolher tipo, termo, ordenação, limite por página e navegar pelos resultados.
 
@@ -239,37 +253,3 @@ star-wars-api/
   README.md
   ARCHITECTURE.md
 ```
-
-# Star Wars API Explorer
-
-![Interface do Star Wars API Explorer](docs/frontend.png)
-
----
-
-## 1. Como testar (instância já publicada)
-
-Você não precisa subir nada para testar. Já existe uma instância publicada.
-
-- **URL base do API Gateway:**
-
-  `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/`
-
-### 1.1. Testar direto no navegador
-
-Abra no navegador, por exemplo:
-
-- Lista de personagens (página 1, 10 itens):
-
-  `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&pagina=1&limite=10`
-- Buscar por “Luke”:
-
-  `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&termo=Luke`
-
-Você verá o JSON retornado pela API.
-
-### 1.2. Testar com o frontend deste projeto
-
-1. Abra o arquivo `frontend/index.html` em um editor.
-2. Confira a linha onde está a `API_BASE_URL`:
-
-   const API_BASE_URL = 'https://starwars-gateway-7mwhqkjo.uc.gateway.dev/';
