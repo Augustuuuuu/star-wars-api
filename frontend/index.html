@@ -4,7 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Star Wars API Explorer</title>
+    <link href="https://fonts.cdnfonts.com/css/star-wars" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --sw-yellow: #FFE81F;
+            --sw-blue: #2E67F8;
+            --dark-bg: #050505;
+            --card-bg: rgba(20, 20, 20, 0.9);
+            --input-bg: #151515;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,233 +23,240 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #fff;
+            background-color: var(--dark-bg);
+            color: #ffffff;
+            font-family: 'Roboto', sans-serif;
             min-height: 100vh;
-            padding: 20px;
+            overflow-x: hidden;
+            /* Estrelas menores e coloridas */
+            background-image: 
+                radial-gradient(1px 1px at 25px 35px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1.2px 1.2px at 50px 80px, var(--sw-blue), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 90px 45px, var(--sw-yellow), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 150px 100px, #ff4444, rgba(0,0,0,0));
+            background-size: 250px 250px;
+            animation: stars-animation 200s linear infinite;
+        }
+
+        @keyframes stars-animation {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 1000px; }
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
+            padding: 40px 20px;
         }
 
         header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-family: 'Star Wars', sans-serif;
+            font-size: 3.5em;
+            color: var(--sw-yellow);
+            text-shadow: 0 0 20px rgba(255, 232, 31, 0.4);
+            letter-spacing: 4px;
         }
 
         .subtitle {
-            font-size: 1.1em;
-            opacity: 0.9;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 10px;
         }
 
+        /* Painel de Busca - Amarelo */
         .search-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 0.95em;
-        }
-
-        select, input {
-            width: 100%;
-            padding: 12px;
-            border: none;
+            background: var(--card-bg);
+            border: 2px solid var(--sw-yellow);
+            padding: 30px;
+            margin-bottom: 35px;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
-            font-size: 1em;
-            transition: all 0.3s;
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+            clip-path: polygon(3% 0, 97% 0, 100% 15%, 100% 85%, 97% 100%, 3% 100%, 0 85%, 0 15%);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .form-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: var(--sw-yellow);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        select, input {
+            padding: 12px;
+            background: var(--input-bg);
+            border: 1px solid #333;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--sw-yellow);
+            box-shadow: 0 0 8px rgba(255, 232, 31, 0.3);
         }
 
         button {
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            color: #1e3c72;
+            grid-column: 1 / -1;
+            margin: 20px auto 0;
+            background: var(--sw-yellow);
+            color: #000;
             border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
+            padding: 12px 60px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
 
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--sw-yellow);
         }
 
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
+        /* Container de Resultados - Azul */
         .results-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            min-height: 200px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2em;
-        }
-
-        .error {
-            background: rgba(255, 0, 0, 0.2);
-            border-left: 4px solid #ff4444;
-            padding: 15px;
+            background: var(--card-bg);
+            border: 2px solid var(--sw-blue);
+            padding: 30px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            min-height: 300px;
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 2% 100%, 0 95%);
         }
 
         .info-bar {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            flex-wrap: wrap;
-            gap: 10px;
+            color: var(--sw-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
         }
 
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
+        /* Card Individual */
         .result-card {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #222;
+            border-left: 4px solid var(--sw-blue);
             padding: 20px;
-            transition: all 0.3s;
-            border: 2px solid transparent;
+            border-radius: 4px;
+            transition: all 0.3s ease;
         }
 
         .result-card:hover {
-            transform: translateY(-5px);
-            border-color: #ffd700;
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--sw-blue);
         }
 
         .result-card h3 {
-            color: #ffd700;
-            margin-bottom: 15px;
-            font-size: 1.3em;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--sw-yellow);
+            font-size: 1rem;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
         }
 
         .result-card p {
-            margin: 8px 0;
-            line-height: 1.6;
+            font-size: 0.85rem;
+            margin: 6px 0;
+            color: #ddd;
+            display: flex;
+            justify-content: space-between;
         }
 
         .result-card strong {
-            color: #ffd700;
+            color: var(--sw-blue);
+            font-weight: 400;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            margin-right: 10px;
         }
 
+        /* Paginação */
         .pagination {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 30px;
         }
 
         .pagination button {
-            padding: 8px 15px;
-            font-size: 0.9em;
+            padding: 8px 20px;
+            background: transparent;
+            border: 1px solid var(--sw-blue);
+            color: var(--sw-blue);
+            border-radius: 4px;
+            font-size: 0.7rem;
         }
 
-        .pagination-info {
-            padding: 8px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-        }
-
-        .empty-state {
+        footer {
             text-align: center;
-            padding: 60px 20px;
-            opacity: 0.8;
+            margin: 60px 0;
+            font-family: 'Orbitron', sans-serif;
+            color: #666;
+            font-size: 1rem;
+            letter-spacing: 2px;
         }
 
-        .empty-state h2 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
+        .loading {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--sw-yellow);
+            padding: 50px;
         }
 
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2em;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 600px) {
+            h1 { font-size: 2.2em; }
+            .search-panel, .results-container { clip-path: none; padding: 20px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>⭐ Star Wars API Explorer</h1>
-            <p class="subtitle">Explore o universo Star Wars de forma interativa</p>
+            <h1>STAR WARS</h1>
+            <p class="subtitle">Explorador de Arquivos Galácticos</p>
         </header>
 
         <div class="search-panel">
             <form id="searchForm">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="tipo">Tipo de Recurso:</label>
+                        <label for="tipo">Tipo de Recurso</label>
                         <select id="tipo" name="tipo" required>
                             <option value="">Selecione...</option>
                             <option value="people">Personagens</option>
@@ -249,19 +267,19 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="termo">Buscar (opcional):</label>
-                        <input type="text" id="termo" name="termo" placeholder="Ex: Luke, Tatooine, Falcon">
+                        <label for="termo">Buscar (opcional)</label>
+                        <input type="text" id="termo" name="termo" placeholder="Ex: Skywalker, Tatooine...">
                     </div>
 
                     <div class="form-group">
-                        <label for="ordenar_por">Ordenar por:</label>
+                        <label for="ordenar_por">Ordenar por</label>
                         <select id="ordenar_por" name="ordenar_por">
-                            <option value="">Nenhuma ordenação</option>
+                            <option value="">Padrão</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="ordem">Ordem:</label>
+                        <label for="ordem">Ordem</label>
                         <select id="ordem" name="ordem">
                             <option value="asc">Crescente</option>
                             <option value="desc">Decrescente</option>
@@ -269,28 +287,28 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="limite">Itens por página:</label>
+                        <label for="limite">Itens por página</label>
                         <input type="number" id="limite" name="limite" value="10" min="1" max="100">
                     </div>
                 </div>
-
-                <button type="submit">🔍 Buscar</button>
+                <button type="submit">Iniciar Escaneamento</button>
             </form>
         </div>
 
         <div class="results-container">
-            <div id="loading" class="loading" style="display: none;">
-                Carregando...
-            </div>
-            <div id="error" class="error" style="display: none;"></div>
+            <div id="loading" class="loading" style="display: none;">Conectando à Holonet...</div>
+            <div id="error" style="display: none; color: #ff4444; text-align: center; padding: 20px;"></div>
             <div id="results"></div>
         </div>
+
+        <footer>
+            Augusto Saboia Galaxy
+        </footer>
     </div>
 
     <script>
-        const API_BASE_URL = 'https://SEU_GATEWAY_URL'; // Substitua pela URL do seu API Gateway
+        const API_BASE_URL = 'https://starwars-gateway-7mwhqkjo.uc.gateway.dev/'; 
         
-        // Configuração de campos de ordenação por tipo
         const sortFields = {
             people: [
                 { value: 'name', label: 'Nome' },
@@ -301,32 +319,26 @@
             planets: [
                 { value: 'name', label: 'Nome' },
                 { value: 'diameter', label: 'Diâmetro' },
-                { value: 'population', label: 'População' },
-                { value: 'rotation_period', label: 'Período de Rotação' }
+                { value: 'population', label: 'População' }
             ],
             starships: [
                 { value: 'name', label: 'Nome' },
                 { value: 'length', label: 'Comprimento' },
-                { value: 'crew', label: 'Tripulação' },
-                { value: 'passengers', label: 'Passageiros' }
+                { value: 'crew', label: 'Tripulação' }
             ],
             films: [
                 { value: 'title', label: 'Título' },
                 { value: 'episode_id', label: 'Episódio' },
-                { value: 'release_date', label: 'Data de Lançamento' }
+                { value: 'release_date', label: 'Lançamento' }
             ]
         };
 
         let currentPage = 1;
-        let currentParams = {};
 
-        // Atualizar campos de ordenação quando o tipo muda
         document.getElementById('tipo').addEventListener('change', function() {
             const tipo = this.value;
             const ordenarPor = document.getElementById('ordenar_por');
-            
-            ordenarPor.innerHTML = '<option value="">Nenhuma ordenação</option>';
-            
+            ordenarPor.innerHTML = '<option value="">Padrão</option>';
             if (tipo && sortFields[tipo]) {
                 sortFields[tipo].forEach(field => {
                     const option = document.createElement('option');
@@ -337,7 +349,6 @@
             }
         });
 
-        // Submeter formulário
         document.getElementById('searchForm').addEventListener('submit', function(e) {
             e.preventDefault();
             currentPage = 1;
@@ -351,64 +362,39 @@
             const ordem = document.getElementById('ordem').value;
             const limite = document.getElementById('limite').value;
 
-            if (!tipo) {
-                showError('Por favor, selecione um tipo de recurso.');
-                return;
-            }
-
-            currentParams = { tipo, termo, ordenarPor, ordem, limite };
-
-            showLoading();
-            hideError();
-            hideResults();
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('error').style.display = 'none';
 
             try {
-                const params = new URLSearchParams({
-                    tipo: tipo,
-                    pagina: currentPage.toString(),
-                    limite: limite || '10'
-                });
-
+                const params = new URLSearchParams({ tipo, pagina: currentPage, limite });
                 if (termo) params.append('termo', termo);
                 if (ordenarPor) params.append('ordenar_por', ordenarPor);
                 if (ordem) params.append('ordem', ordem);
 
                 const response = await fetch(`${API_BASE_URL}/explorar?${params}`);
                 const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.erro || data.mensagem || 'Erro ao buscar dados');
-                }
-
+                if (!response.ok) throw new Error(data.erro || 'Falha na conexão');
                 displayResults(data);
             } catch (error) {
-                showError(`Erro: ${error.message}`);
+                document.getElementById('error').textContent = `ERRO DE TRANSMISSÃO: ${error.message}`;
+                document.getElementById('error').style.display = 'block';
             } finally {
-                hideLoading();
+                document.getElementById('loading').style.display = 'none';
             }
         }
 
         function displayResults(data) {
             const resultsDiv = document.getElementById('results');
-            
             if (!data.resultados || data.resultados.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="empty-state">
-                        <h2>Nenhum resultado encontrado</h2>
-                        <p>Tente ajustar seus filtros de busca.</p>
-                    </div>
-                `;
+                resultsDiv.innerHTML = '<div style="text-align:center; padding: 40px;"><h2>ARQUIVO NÃO ENCONTRADO</h2></div>';
                 return;
             }
 
             let html = `
                 <div class="info-bar">
-                    <div>
-                        <strong>Total encontrado:</strong> ${data.total_encontrado || data.resultados.length}
-                    </div>
-                    <div>
-                        <strong>Página:</strong> ${data.pagina_atual || 1} de ${data.total_paginas || 1}
-                    </div>
+                    <span>ENCONTRADOS: ${data.total_encontrado}</span>
+                    <span>PÁGINA: ${data.pagina_atual} / ${data.total_paginas}</span>
                 </div>
                 <div class="results-grid">
             `;
@@ -418,98 +404,56 @@
             });
 
             html += '</div>';
-
-            // Adicionar paginação se necessário
-            if (data.total_paginas > 1) {
-                html += createPagination(data);
-            }
-
+            if (data.total_paginas > 1) html += createPagination(data);
             resultsDiv.innerHTML = html;
-            resultsDiv.style.display = 'block';
         }
 
         function createCard(item, categoria) {
-            let content = `<div class="result-card"><h3>${item.name || item.title || 'Sem nome'}</h3>`;
-
+            let content = `<div class="result-card"><h3>${item.name || item.title}</h3>`;
+            
             if (categoria === 'people') {
                 content += `
-                    <p><strong>Altura:</strong> ${item.height || 'N/A'}</p>
-                    <p><strong>Peso:</strong> ${item.mass || 'N/A'}</p>
-                    <p><strong>Ano de Nascimento:</strong> ${item.birth_year || 'N/A'}</p>
-                    <p><strong>Gênero:</strong> ${item.gender || 'N/A'}</p>
+                    <p><strong>Altura</strong> <span>${item.height} cm</span></p>
+                    <p><strong>Peso</strong> <span>${item.mass} kg</span></p>
+                    <p><strong>Gênero</strong> <span>${item.gender}</span></p>
+                    <p><strong>Nascimento</strong> <span>${item.birth_year}</span></p>
+                    <p><strong>Olhos</strong> <span>${item.eye_color}</span></p>
                 `;
             } else if (categoria === 'planets') {
                 content += `
-                    <p><strong>Diâmetro:</strong> ${item.diameter || 'N/A'}</p>
-                    <p><strong>População:</strong> ${item.population || 'N/A'}</p>
-                    <p><strong>Clima:</strong> ${item.climate || 'N/A'}</p>
-                    <p><strong>Terreno:</strong> ${item.terrain || 'N/A'}</p>
+                    <p><strong>Clima</strong> <span>${item.climate}</span></p>
+                    <p><strong>Terreno</strong> <span>${item.terrain}</span></p>
+                    <p><strong>População</strong> <span>${item.population}</span></p>
+                    <p><strong>Diâmetro</strong> <span>${item.diameter} km</span></p>
                 `;
             } else if (categoria === 'starships') {
                 content += `
-                    <p><strong>Modelo:</strong> ${item.model || 'N/A'}</p>
-                    <p><strong>Fabricante:</strong> ${item.manufacturer || 'N/A'}</p>
-                    <p><strong>Tripulação:</strong> ${item.crew || 'N/A'}</p>
-                    <p><strong>Passageiros:</strong> ${item.passengers || 'N/A'}</p>
+                    <p><strong>Modelo</strong> <span>${item.model}</span></p>
+                    <p><strong>Tripulação</strong> <span>${item.crew}</span></p>
+                    <p><strong>Passageiros</strong> <span>${item.passengers}</span></p>
+                    <p><strong>Custo</strong> <span>${item.cost_in_credits}</span></p>
                 `;
             } else if (categoria === 'films') {
                 content += `
-                    <p><strong>Episódio:</strong> ${item.episode_id || 'N/A'}</p>
-                    <p><strong>Diretor:</strong> ${item.director || 'N/A'}</p>
-                    <p><strong>Produtor:</strong> ${item.producer || 'N/A'}</p>
-                    <p><strong>Data de Lançamento:</strong> ${item.release_date || 'N/A'}</p>
+                    <p><strong>Episódio</strong> <span>${item.episode_id}</span></p>
+                    <p><strong>Diretor</strong> <span>${item.director}</span></p>
+                    <p><strong>Lançamento</strong> <span>${item.release_date}</span></p>
                 `;
             }
 
-            content += '</div>';
-            return content;
+            return content + '</div>';
         }
 
         function createPagination(data) {
-            const totalPages = data.total_paginas;
-            const currentPageNum = data.pagina_atual;
-
             let html = '<div class="pagination">';
-
-            if (currentPageNum > 1) {
-                html += `<button onclick="goToPage(${currentPageNum - 1})">← Anterior</button>`;
-            }
-
-            html += `<div class="pagination-info">Página ${currentPageNum} de ${totalPages}</div>`;
-
-            if (currentPageNum < totalPages) {
-                html += `<button onclick="goToPage(${currentPageNum + 1})">Próxima →</button>`;
-            }
-
-            html += '</div>';
-            return html;
+            if (data.pagina_atual > 1) html += `<button onclick="goToPage(${data.pagina_atual - 1})">ANTERIOR</button>`;
+            if (data.pagina_atual < data.total_paginas) html += `<button onclick="goToPage(${data.pagina_atual + 1})">PRÓXIMA</button>`;
+            return html + '</div>';
         }
 
         function goToPage(page) {
             currentPage = page;
             search();
-        }
-
-        function showLoading() {
-            document.getElementById('loading').style.display = 'block';
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').style.display = 'none';
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
-
-        function hideError() {
-            document.getElementById('error').style.display = 'none';
-        }
-
-        function hideResults() {
-            document.getElementById('results').style.display = 'none';
         }
     </script>
 </body>

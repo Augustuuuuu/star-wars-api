@@ -186,11 +186,8 @@ class TestStarwarsHandler:
         """Testa que o parâmetro 'tipo' é case-insensitive."""
         mock_request = self.create_mock_request(args={'tipo': 'PEOPLE'})
         
-        with patch('main.fetch_from_swapi') as mock_fetch:
-            mock_fetch.return_value = {
-                'results': [{'name': 'Luke'}],
-                'count': 1
-            }
+        with patch('main.fetch_all_pages_swapi') as mock_fetch:
+            mock_fetch.return_value = ([{'name': 'Luke'}], 1)
             
             with app.app_context():
                 response, status_code, headers = starwars_handler(mock_request)
@@ -243,14 +240,11 @@ class TestStarwarsHandler:
         data = response.get_json()
         assert 'erro' in data
     
-    @patch('main.fetch_from_swapi')
+    @patch('main.fetch_all_pages_swapi')
     def test_success_without_filter(self, mock_fetch, app):
         """Testa sucesso sem filtro de busca."""
         mock_request = self.create_mock_request(args={'tipo': 'people'})
-        mock_fetch.return_value = {
-            'results': [{'name': 'Luke Skywalker'}],
-            'count': 1
-        }
+        mock_fetch.return_value = ([{'name': 'Luke Skywalker'}], 1)
         
         with app.app_context():
             response, status_code, headers = starwars_handler(mock_request)
@@ -262,17 +256,14 @@ class TestStarwarsHandler:
         assert len(data['resultados']) == 1
         mock_fetch.assert_called_once_with('people', {})
     
-    @patch('main.fetch_from_swapi')
+    @patch('main.fetch_all_pages_swapi')
     def test_success_with_filter(self, mock_fetch, app):
         """Testa sucesso com filtro de busca."""
         mock_request = self.create_mock_request(args={
             'tipo': 'people',
             'termo': 'Luke'
         })
-        mock_fetch.return_value = {
-            'results': [{'name': 'Luke Skywalker'}],
-            'count': 1
-        }
+        mock_fetch.return_value = ([{'name': 'Luke Skywalker'}], 1)
         
         with app.app_context():
             response, status_code, headers = starwars_handler(mock_request)
@@ -283,17 +274,14 @@ class TestStarwarsHandler:
         assert len(data['resultados']) == 1
         mock_fetch.assert_called_once_with('people', {'search': 'Luke'})
     
-    @patch('main.fetch_from_swapi')
+    @patch('main.fetch_all_pages_swapi')
     def test_no_results_found(self, mock_fetch, app):
         """Testa resposta quando não há resultados."""
         mock_request = self.create_mock_request(args={
             'tipo': 'people',
             'termo': 'NonExistent'
         })
-        mock_fetch.return_value = {
-            'results': [],
-            'count': 0
-        }
+        mock_fetch.return_value = ([], 0)
         
         with app.app_context():
             response, status_code, headers = starwars_handler(mock_request)
@@ -302,7 +290,7 @@ class TestStarwarsHandler:
         data = response.get_json()
         assert 'mensagem' in data
     
-    @patch('main.fetch_from_swapi')
+    @patch('main.fetch_all_pages_swapi')
     def test_swapi_error(self, mock_fetch, app):
         """Testa tratamento de erro da SWAPI."""
         mock_request = self.create_mock_request(args={'tipo': 'people'})
@@ -315,10 +303,10 @@ class TestStarwarsHandler:
         data = response.get_json()
         assert 'erro' in data
     
-    @patch('main.fetch_from_swapi')
+    @patch('main.fetch_all_pages_swapi')
     def test_all_resource_types(self, mock_fetch, app):
         """Testa que todos os tipos de recursos são aceitos."""
-        mock_fetch.return_value = {'results': [], 'count': 0}
+        mock_fetch.return_value = ([], 0)
         
         resource_types = ['people', 'planets', 'starships', 'films']
         
@@ -338,8 +326,8 @@ class TestStarwarsHandler:
             'termo': '  Luke  '
         })
         
-        with patch('main.fetch_from_swapi') as mock_fetch:
-            mock_fetch.return_value = {'results': [], 'count': 0}
+        with patch('main.fetch_all_pages_swapi') as mock_fetch:
+            mock_fetch.return_value = ([], 0)
             
             with app.app_context():
                 starwars_handler(mock_request)

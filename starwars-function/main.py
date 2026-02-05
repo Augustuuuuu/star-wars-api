@@ -90,6 +90,65 @@ def fetch_from_swapi(resource: str, params: Optional[Dict[str, str]] = None) -> 
     
     return None
 
+
+def fetch_swapi_url(url: str) -> Optional[Dict[str, Any]]:
+    """
+    Consulta a SWAPI por URL completa (usado para seguir paginação 'next').
+    Usa a mesma política de retry que fetch_from_swapi.
+    """
+    for attempt in range(MAX_RETRIES):
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            if 400 <= e.response.status_code < 500:
+                logger.error(f"Erro HTTP do cliente ao buscar {url}: {e}")
+                return None
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY * (RETRY_BACKOFF ** attempt))
+            else:
+                logger.error(f"Erro ao buscar URL SWAPI {url}: {e}")
+                return None
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError,
+                requests.exceptions.RequestException) as e:
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY * (RETRY_BACKOFF ** attempt))
+            else:
+                logger.error(f"Erro ao buscar URL SWAPI {url}: {e}")
+                return None
+    return None
+
+
+def fetch_all_pages_swapi(resource: str, params: Optional[Dict[str, str]] = None) -> Optional[Tuple[list, int]]:
+    """
+    Busca todos os resultados do recurso na SWAPI, percorrendo todas as páginas.
+    A SWAPI retorna no máximo 10 itens por página e um campo 'next' com a URL da próxima página.
+
+    Returns:
+        Tupla (lista_completa_de_resultados, total_count) ou None em caso de falha.
+    """
+    data = fetch_from_swapi(resource, params)
+    if data is None:
+        return None
+
+    all_results = list(data.get('results', []))
+    total_count = data.get('count', len(all_results))
+    next_url = data.get('next')
+
+    while next_url:
+        data = fetch_swapi_url(next_url)
+        if data is None:
+            logger.warning("Falha ao obter próxima página da SWAPI; retornando resultados obtidos até aqui.")
+            break
+        page_results = data.get('results', [])
+        all_results.extend(page_results)
+        next_url = data.get('next')
+
+    logger.info(f"SWAPI: total de {len(all_results)} resultado(s) para {resource} (count={total_count})")
+    return (all_results, total_count)
+
+
 def sort_results(results: list, sort_by: str, sort_order: str, resource_type: str) -> list:
     """
     Ordena os resultados baseado no campo especificado.
@@ -128,28 +187,29 @@ def sort_results(results: list, sort_by: str, sort_order: str, resource_type: st
         logger.warning(f"Ordem de classificação inválida: {sort_order}. Usando 'asc'")
         sort_order = 'asc'
     
-    # Função auxiliar para converter valores para comparação
-    def get_sort_value(item: dict, field: str) -> Any:
+    # Função auxiliar para converter valores para comparação.
+    # Retorna sempre (tipo, valor): (0, num) ou (1, str), para evitar TypeError ao comparar int/float com str.
+    def get_sort_key(item: dict, field: str) -> Tuple[int, Any]:
         value = item.get(field, '')
-        if value == 'unknown' or value == 'n/a' or value == '':
-            return float('inf') if sort_order == 'asc' else float('-inf')
-        
-        # Tentar converter para número se possível
+        if value is None or value == 'unknown' or value == 'n/a' or value == '':
+            sentinel = float('inf') if sort_order == 'asc' else float('-inf')
+            return (0, sentinel)
         try:
-            # Remover vírgulas e converter
             cleaned = str(value).replace(',', '').replace('km', '').strip()
+            if not cleaned:
+                sentinel = float('inf') if sort_order == 'asc' else float('-inf')
+                return (0, sentinel)
             if '.' in cleaned:
-                return float(cleaned)
-            return int(cleaned)
-        except (ValueError, AttributeError):
-            # Se não for número, tratar como string
-            return str(value).lower()
+                return (0, float(cleaned))
+            return (0, int(cleaned))
+        except (ValueError, AttributeError, TypeError):
+            return (1, str(value).lower())
     
     # Ordenar resultados
     try:
         sorted_results = sorted(
             results,
-            key=lambda x: get_sort_value(x, sort_by),
+            key=lambda x: get_sort_key(x, sort_by),
             reverse=(sort_order == 'desc')
         )
         logger.info(f"Resultados ordenados por '{sort_by}' em ordem '{sort_order}'")
@@ -316,34 +376,32 @@ def explorar_handler(request: Request) -> Tuple[Any, int, Dict[str, str]]:
     if search_query:
         swapi_params['search'] = search_query
 
-    # 3. Execução
+    # 3. Execução — buscar todas as páginas da SWAPI para ter a lista completa
     logger.info(f"Buscando dados: tipo={resource_type}, termo={search_query or 'nenhum'}")
-    data = fetch_from_swapi(resource_type, swapi_params)
+    fetch_result = fetch_all_pages_swapi(resource_type, swapi_params)
 
-    if data is None:
+    if fetch_result is None:
         logger.error(f"Falha ao obter dados da SWAPI para {resource_type}")
         return jsonify({"erro": "Falha ao obter dados da fonte externa."}), 502, headers
 
-    # 4. Refinamento da Resposta (Agregando Valor)
-    # Em vez de devolver o JSON bruto, podemos simplificar para o usuário
-    results = data.get('results', [])
-    
+    results, total_count = fetch_result
+
     if not results:
         logger.info(f"Nenhum resultado encontrado para {resource_type} com termo '{search_query or 'nenhum'}'")
         return jsonify({"mensagem": "Nenhum registro encontrado para os critérios."}), 404, headers
 
-    # 5. Aplicar ordenação se solicitada
+    # 4. Aplicar ordenação se solicitada
     if sort_by:
         results = sort_results(results, sort_by, sort_order, resource_type)
-    
-    # 6. Aplicar paginação
+
+    # 5. Aplicar paginação sobre a lista completa
     total_results = len(results)
     page_num, limit_num, paginated_results = apply_pagination(results, page, limit)
-    
+
     # Retorna os dados encontrados com metadados básicos
     response_payload = {
         "categoria": resource_type,
-        "total_encontrado": data.get('count'),
+        "total_encontrado": total_count,
         "total_na_pagina": len(paginated_results),
         "pagina_atual": page_num,
         "total_paginas": (total_results + limit_num - 1) // limit_num if limit_num > 0 else 1,
