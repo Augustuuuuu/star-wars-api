@@ -2,9 +2,6 @@
 
 ![Interface do Star Wars API Explorer](docs/frontend.png)
 
->
-> Salve o arquivo de imagem em `docs/frontend.png` neste repositório.
-
 ---
 
 ## 1. Como testar (instância já publicada)
