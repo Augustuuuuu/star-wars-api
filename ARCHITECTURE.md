@@ -56,8 +56,13 @@ sequenceDiagram
     G->>CF: Roteia requisição
     CF->>CF: Valida parâmetros
     CF->>CF: Aplica filtros
-    CF->>S: GET /api/people/?search=Luke
+    CF->>S: GET /api/people/?search=Luke (página 1)
     S-->>CF: Retorna dados JSON
+    loop Enquanto houver next
+        CF->>S: GET [URL next]
+        S-->>CF: Retorna próxima página
+    end
+    CF->>CF: Agrega todas as páginas
     CF->>CF: Ordena resultados (se solicitado)
     CF->>CF: Aplica paginação
     CF-->>G: Resposta JSON estruturada
@@ -113,6 +118,7 @@ sequenceDiagram
   - Busca de recursos (people, planets, starships, films)
   - Filtros por termo de busca
   - Ordenação de resultados
+  - Agregação de todas as páginas da SWAPI antes da paginação
   - Paginação de resultados
   - Validação de parâmetros
   - Tratamento de erros com retry
@@ -157,6 +163,17 @@ sequenceDiagram
 #### 3.4. `fetch_resource_by_url`
 - Busca recurso específico pela URL completa
 - Usado em consultas correlacionadas
+
+#### 3.5. `fetch_swapi_url`
+- Consulta uma URL completa da SWAPI (incluindo parâmetros de paginação)
+- Reutiliza a mesma política de retry de `fetch_from_swapi`
+- Usada para seguir o campo `next` retornado pela SWAPI
+
+#### 3.6. `fetch_all_pages_swapi`
+- Usa `fetch_from_swapi` para buscar a primeira página de resultados
+- Usa `fetch_swapi_url` para seguir o campo `next` até o fim
+- Agrega todos os itens em uma única lista
+- Retorna a lista completa de resultados e o `count` total para o handler aplicar ordenação e paginação
 
 ## Decisões Técnicas
 
@@ -243,7 +260,7 @@ sequenceDiagram
 ```json
 {
   "categoria": "people",
-  "total_encontrado": 87,
+  "total_encontrado": 82,
   "total_na_pagina": 10,
   "pagina_atual": 1,
   "total_paginas": 9,
