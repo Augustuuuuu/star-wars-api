@@ -1,8 +1,20 @@
 # Star Wars API Explorer
 
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![GCP](https://img.shields.io/badge/GCP-Cloud_Functions-orange)
+![FastAPI](https://img.shields.io/badge/API_Gateway-GCP-blue)
+![pytest](https://img.shields.io/badge/pytest-tested-green)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/deploy-live-brightgreen)
+
 ![Interface do Star Wars API Explorer](docs/frontend.png)
 
-Aplicação para explorar dados de Star Wars usando a SWAPI, com backend em Cloud Functions (GCP) e um frontend em HTML/JS.
+Este projeto foi desenvolvido como solução para um desafio técnico de processo seletivo. A empresa solicitou que o nome não fosse divulgado.
+
+A aplicação consome a [SWAPI](https://swapi.dev) e expõe uma API RESTful deployada no **Google Cloud Platform** com Cloud Functions e API Gateway. Inclui frontend temático em HTML/JS, testes unitários com pytest e documentação de arquitetura com diagramas Mermaid.
+
+**A instância está no ar e pode ser testada agora:**
+`https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&pagina=1&limite=10`
 
 **Principais funcionalidades:**
 
@@ -11,6 +23,8 @@ Aplicação para explorar dados de Star Wars usando a SWAPI, com backend em Clou
 - **Ordenar resultados**: por campos como altura, peso, população, data de lançamento etc.
 - **Paginar resultados**: controlar página e quantidade de itens.
 - **Consultas correlacionadas**: personagens por filme, naves por personagem, planetas por filme.
+- **Retry com backoff exponencial**: resiliência automática em falhas da API externa.
+- **Testes unitários**: cobertura com pytest e mocks.
 
 ---
 
