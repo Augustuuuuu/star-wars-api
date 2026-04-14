@@ -28,7 +28,7 @@ paths:
           name: ordenar_por
           type: string
           required: false
-          description: Campo para ordenação. Para people: name, height, mass, birth_year. Para planets: name, diameter, population. Para starships: name, length, crew. Para films: title, episode_id, release_date.
+          description: "Campo para ordenação. Para people: name, height, mass, birth_year. Para planets: name, diameter, population. Para starships: name, length, crew. Para films: title, episode_id, release_date."
         - in: query
           name: ordem
           type: string
@@ -51,7 +51,8 @@ paths:
           maximum: 100
           description: Número de itens por página (máximo 100).
       x-google-backend:
-        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-backend
+        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-function
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         '200':
           description: Sucesso - Dados retornados com paginação
@@ -89,7 +90,8 @@ paths:
           required: true
           description: ID do filme na SWAPI (1-6).
       x-google-backend:
-        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-backend
+        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-function
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         '200':
           description: Sucesso - Lista de personagens do filme
@@ -117,7 +119,8 @@ paths:
           required: true
           description: ID do personagem na SWAPI.
       x-google-backend:
-        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-backend
+        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-function
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         '200':
           description: Sucesso - Lista de naves do personagem
@@ -145,7 +148,8 @@ paths:
           required: true
           description: ID do filme na SWAPI (1-6).
       x-google-backend:
-        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-backend
+        address: https://us-central1-star-wars-challenge-486413.cloudfunctions.net/starwars-function
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         '200':
           description: Sucesso - Lista de planetas do filme

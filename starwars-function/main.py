@@ -271,7 +271,7 @@ def starwars_handler(request: Request) -> Tuple[Any, int, Dict[str, str]]:
 
     headers = {'Access-Control-Allow-Origin': '*'}
     path = request.path
-    
+
     logger.info(f"Requisição recebida: {request.method} {path}")
     
     # Roteamento baseado no path
@@ -430,14 +430,13 @@ def fetch_resource_by_url(url: str) -> Optional[Dict[str, Any]]:
         logger.error(f"Erro ao buscar recurso por URL {url}: {e}")
         return None
 
-@functions_framework.http
 def personagens_filme_handler(request: Request) -> Tuple[Any, int, Dict[str, str]]:
     """
     Endpoint para buscar personagens de um filme específico.
     Exemplo: /personagens-filme?filme_id=1
     """
     headers = {'Access-Control-Allow-Origin': '*'}
-    
+
     if request.method == 'OPTIONS':
         return ('', 204, {
             'Access-Control-Allow-Origin': '*',
@@ -445,7 +444,7 @@ def personagens_filme_handler(request: Request) -> Tuple[Any, int, Dict[str, str
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Max-Age': '3600'
         })
-    
+
     filme_id = request.args.get('filme_id')
     
     if not filme_id:
@@ -485,14 +484,13 @@ def personagens_filme_handler(request: Request) -> Tuple[Any, int, Dict[str, str
     logger.info(f"Retornados {len(personagens)} personagens para o filme {filme_id}")
     return jsonify(response_payload), 200, headers
 
-@functions_framework.http
 def naves_personagem_handler(request: Request) -> Tuple[Any, int, Dict[str, str]]:
     """
     Endpoint para buscar naves de um personagem específico.
     Exemplo: /naves-personagem?personagem_id=1
     """
     headers = {'Access-Control-Allow-Origin': '*'}
-    
+
     if request.method == 'OPTIONS':
         return ('', 204, {
             'Access-Control-Allow-Origin': '*',
@@ -500,7 +498,7 @@ def naves_personagem_handler(request: Request) -> Tuple[Any, int, Dict[str, str]
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Max-Age': '3600'
         })
-    
+
     personagem_id = request.args.get('personagem_id')
     
     if not personagem_id:
@@ -540,14 +538,13 @@ def naves_personagem_handler(request: Request) -> Tuple[Any, int, Dict[str, str]
     logger.info(f"Retornadas {len(naves)} naves para o personagem {personagem_id}")
     return jsonify(response_payload), 200, headers
 
-@functions_framework.http
 def planetas_filme_handler(request: Request) -> Tuple[Any, int, Dict[str, str]]:
     """
     Endpoint para buscar planetas de um filme específico.
     Exemplo: /planetas-filme?filme_id=1
     """
     headers = {'Access-Control-Allow-Origin': '*'}
-    
+
     if request.method == 'OPTIONS':
         return ('', 204, {
             'Access-Control-Allow-Origin': '*',
@@ -555,7 +552,7 @@ def planetas_filme_handler(request: Request) -> Tuple[Any, int, Dict[str, str]]:
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Max-Age': '3600'
         })
-    
+
     filme_id = request.args.get('filme_id')
     
     if not filme_id:
