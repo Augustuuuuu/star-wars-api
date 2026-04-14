@@ -13,7 +13,13 @@ Este projeto foi desenvolvido como solução para um desafio técnico de process
 
 A aplicação consome a [SWAPI](https://swapi.dev) e expõe uma API RESTful deployada no **Google Cloud Platform** com Cloud Functions e API Gateway. Inclui frontend temático em HTML/JS, testes unitários com pytest e documentação de arquitetura com diagramas Mermaid.
 
-**A instância está no ar e pode ser testada agora:**
+## 🚀 Acesse agora
+
+**O projeto está no ar! Visite a interface web:**
+
+👉 **[starwarsapi-liard.vercel.app](https://starwarsapi-liard.vercel.app/)**
+
+Ou teste direto via API:
 `https://starwars-gateway-7mwhqkjo.uc.gateway.dev/explorar?tipo=people&pagina=1&limite=10`
 
 **Principais funcionalidades:**
@@ -31,6 +37,10 @@ A aplicação consome a [SWAPI](https://swapi.dev) e expõe uma API RESTful depl
 ## 1. Como testar (instância já publicada)
 
 Você não precisa subir nada para testar. Já existe uma instância publicada.
+
+### 1.0. Forma mais fácil: interface web (Vercel)
+
+Basta acessar: **[starwarsapi-liard.vercel.app](https://starwarsapi-liard.vercel.app/)** 🌐
 
 - **URL base do API Gateway (minha instância):**
 

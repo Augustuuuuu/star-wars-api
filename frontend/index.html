@@ -239,9 +239,52 @@
             padding: 50px;
         }
 
+        /* Abas */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid var(--sw-blue);
+            color: var(--sw-blue);
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .tab-btn:hover {
+            color: var(--sw-yellow);
+            border-color: var(--sw-yellow);
+        }
+
+        .tab-btn.active {
+            background: var(--sw-yellow);
+            color: #000;
+            border-color: var(--sw-yellow);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         @media (max-width: 600px) {
             h1 { font-size: 2.2em; }
             .search-panel, .results-container { clip-path: none; padding: 20px; }
+            .tabs { flex-direction: column; }
+            .tab-btn { width: 100%; }
         }
     </style>
 </head>
@@ -252,7 +295,16 @@
             <p class="subtitle">Explorador de Arquivos Galácticos</p>
         </header>
 
-        <div class="search-panel">
+        <!-- Abas de Navegação -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="explorar">🔍 Explorar</button>
+            <button class="tab-btn" data-tab="personagens-filme">👥 Personagens do Filme</button>
+            <button class="tab-btn" data-tab="naves-personagem">🚀 Naves do Personagem</button>
+            <button class="tab-btn" data-tab="planetas-filme">🌍 Planetas do Filme</button>
+        </div>
+
+        <!-- TAB 1: Explorar -->
+        <div class="search-panel tab-content active" id="explorar-tab">
             <form id="searchForm">
                 <div class="form-row">
                     <div class="form-group">
@@ -295,6 +347,61 @@
             </form>
         </div>
 
+        <!-- TAB 2: Personagens do Filme -->
+        <div class="search-panel tab-content" id="personagens-filme-tab">
+            <form id="personagensFilmeForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filme_id">ID do Filme (1-6)</label>
+                        <select id="filme_id" name="filme_id" required>
+                            <option value="">Selecione...</option>
+                            <option value="1">Episode IV - A New Hope</option>
+                            <option value="2">Episode V - The Empire Strikes Back</option>
+                            <option value="3">Episode VI - Return of the Jedi</option>
+                            <option value="4">Episode I - The Phantom Menace</option>
+                            <option value="5">Episode II - Attack of the Clones</option>
+                            <option value="6">Episode III - Revenge of the Sith</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit">Buscar Personagens</button>
+            </form>
+        </div>
+
+        <!-- TAB 3: Naves do Personagem -->
+        <div class="search-panel tab-content" id="naves-personagem-tab">
+            <form id="navesPersonagemForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="personagem_id">ID do Personagem</label>
+                        <input type="number" id="personagem_id" name="personagem_id" placeholder="Ex: 1 (Luke Skywalker)" required>
+                    </div>
+                </div>
+                <button type="submit">Buscar Naves</button>
+            </form>
+        </div>
+
+        <!-- TAB 4: Planetas do Filme -->
+        <div class="search-panel tab-content" id="planetas-filme-tab">
+            <form id="planetasFilmeForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filme_id_2">ID do Filme (1-6)</label>
+                        <select id="filme_id_2" name="filme_id_2" required>
+                            <option value="">Selecione...</option>
+                            <option value="1">Episode IV - A New Hope</option>
+                            <option value="2">Episode V - The Empire Strikes Back</option>
+                            <option value="3">Episode VI - Return of the Jedi</option>
+                            <option value="4">Episode I - The Phantom Menace</option>
+                            <option value="5">Episode II - Attack of the Clones</option>
+                            <option value="6">Episode III - Revenge of the Sith</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit">Buscar Planetas</button>
+            </form>
+        </div>
+
         <div class="results-container">
             <div id="loading" class="loading" style="display: none;">Conectando à Holonet...</div>
             <div id="error" style="display: none; color: #ff4444; text-align: center; padding: 20px;"></div>
@@ -307,8 +414,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'https://starwars-gateway-7mwhqkjo.uc.gateway.dev/'; 
-        
+        const API_BASE_URL = 'https://starwars-gateway-7mwhqkjo.uc.gateway.dev/';
+
         const sortFields = {
             people: [
                 { value: 'name', label: 'Nome' },
@@ -334,6 +441,23 @@
         };
 
         let currentPage = 1;
+        let currentTab = 'explorar';
+
+        // Gerenciamento de abas
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentTab = this.dataset.tab;
+                currentPage = 1;
+
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                this.classList.add('active');
+                document.getElementById(currentTab + '-tab').classList.add('active');
+                document.getElementById('results').innerHTML = '';
+                document.getElementById('error').style.display = 'none';
+            });
+        });
 
         document.getElementById('tipo').addEventListener('change', function() {
             const tipo = this.value;
@@ -349,13 +473,32 @@
             }
         });
 
+        // Formulário Explorar
         document.getElementById('searchForm').addEventListener('submit', function(e) {
             e.preventDefault();
             currentPage = 1;
-            search();
+            searchExplorar();
         });
 
-        async function search() {
+        // Formulário Personagens do Filme
+        document.getElementById('personagensFilmeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            searchPersonagensFilme();
+        });
+
+        // Formulário Naves do Personagem
+        document.getElementById('navesPersonagemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            searchNavesPersonagem();
+        });
+
+        // Formulário Planetas do Filme
+        document.getElementById('planetasFilmeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            searchPlanetasFilme();
+        });
+
+        async function searchExplorar() {
             const tipo = document.getElementById('tipo').value;
             const termo = document.getElementById('termo').value;
             const ordenarPor = document.getElementById('ordenar_por').value;
@@ -372,10 +515,10 @@
                 if (ordenarPor) params.append('ordenar_por', ordenarPor);
                 if (ordem) params.append('ordem', ordem);
 
-                const response = await fetch(`${API_BASE_URL}/explorar?${params}`);
+                const response = await fetch(`${API_BASE_URL}explorar?${params}`);
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.erro || 'Falha na conexão');
-                displayResults(data);
+                displayExplorarResults(data);
             } catch (error) {
                 document.getElementById('error').textContent = `ERRO DE TRANSMISSÃO: ${error.message}`;
                 document.getElementById('error').style.display = 'block';
@@ -384,7 +527,67 @@
             }
         }
 
-        function displayResults(data) {
+        async function searchPersonagensFilme() {
+            const filme_id = document.getElementById('filme_id').value;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}personagens-filme?filme_id=${filme_id}`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.erro || 'Falha na conexão');
+                displayPersonagensFilmeResults(data);
+            } catch (error) {
+                document.getElementById('error').textContent = `ERRO DE TRANSMISSÃO: ${error.message}`;
+                document.getElementById('error').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function searchNavesPersonagem() {
+            const personagem_id = document.getElementById('personagem_id').value;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}naves-personagem?personagem_id=${personagem_id}`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.erro || 'Falha na conexão');
+                displayNavesPersonagemResults(data);
+            } catch (error) {
+                document.getElementById('error').textContent = `ERRO DE TRANSMISSÃO: ${error.message}`;
+                document.getElementById('error').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function searchPlanetasFilme() {
+            const filme_id = document.getElementById('filme_id_2').value;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}planetas-filme?filme_id=${filme_id}`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.erro || 'Falha na conexão');
+                displayPlanetasFilmeResults(data);
+            } catch (error) {
+                document.getElementById('error').textContent = `ERRO DE TRANSMISSÃO: ${error.message}`;
+                document.getElementById('error').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayExplorarResults(data) {
             const resultsDiv = document.getElementById('results');
             if (!data.resultados || data.resultados.length === 0) {
                 resultsDiv.innerHTML = '<div style="text-align:center; padding: 40px;"><h2>ARQUIVO NÃO ENCONTRADO</h2></div>';
@@ -404,13 +607,82 @@
             });
 
             html += '</div>';
-            if (data.total_paginas > 1) html += createPagination(data);
+            if (data.total_paginas > 1) html += createExplorarPagination(data);
+            resultsDiv.innerHTML = html;
+        }
+
+        function displayPersonagensFilmeResults(data) {
+            const resultsDiv = document.getElementById('results');
+            if (!data.personagens || data.personagens.length === 0) {
+                resultsDiv.innerHTML = '<div style="text-align:center; padding: 40px;"><h2>NENHUM PERSONAGEM ENCONTRADO</h2></div>';
+                return;
+            }
+
+            let html = `
+                <div class="info-bar">
+                    <span>${data.filme.titulo} (Episódio ${data.filme.episodio})</span>
+                    <span>PERSONAGENS: ${data.total_personagens}</span>
+                </div>
+                <div class="results-grid">
+            `;
+
+            data.personagens.forEach(item => {
+                html += createCard(item, 'people');
+            });
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        function displayNavesPersonagemResults(data) {
+            const resultsDiv = document.getElementById('results');
+            if (!data.naves || data.naves.length === 0) {
+                resultsDiv.innerHTML = `<div style="text-align:center; padding: 40px;"><h2>${data.personagem.nome} NÃO PILOTA NAVES</h2></div>`;
+                return;
+            }
+
+            let html = `
+                <div class="info-bar">
+                    <span>${data.personagem.nome} (${data.personagem.altura}cm)</span>
+                    <span>NAVES: ${data.total_naves}</span>
+                </div>
+                <div class="results-grid">
+            `;
+
+            data.naves.forEach(item => {
+                html += createCard(item, 'starships');
+            });
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        function displayPlanetasFilmeResults(data) {
+            const resultsDiv = document.getElementById('results');
+            if (!data.planetas || data.planetas.length === 0) {
+                resultsDiv.innerHTML = '<div style="text-align:center; padding: 40px;"><h2>NENHUM PLANETA ENCONTRADO</h2></div>';
+                return;
+            }
+
+            let html = `
+                <div class="info-bar">
+                    <span>${data.filme.titulo} (Episódio ${data.filme.episodio})</span>
+                    <span>PLANETAS: ${data.total_planetas}</span>
+                </div>
+                <div class="results-grid">
+            `;
+
+            data.planetas.forEach(item => {
+                html += createCard(item, 'planets');
+            });
+
+            html += '</div>';
             resultsDiv.innerHTML = html;
         }
 
         function createCard(item, categoria) {
             let content = `<div class="result-card"><h3>${item.name || item.title}</h3>`;
-            
+
             if (categoria === 'people') {
                 content += `
                     <p><strong>Altura</strong> <span>${item.height} cm</span></p>
@@ -444,7 +716,7 @@
             return content + '</div>';
         }
 
-        function createPagination(data) {
+        function createExplorarPagination(data) {
             let html = '<div class="pagination">';
             if (data.pagina_atual > 1) html += `<button onclick="goToPage(${data.pagina_atual - 1})">ANTERIOR</button>`;
             if (data.pagina_atual < data.total_paginas) html += `<button onclick="goToPage(${data.pagina_atual + 1})">PRÓXIMA</button>`;
@@ -453,7 +725,7 @@
 
         function goToPage(page) {
             currentPage = page;
-            search();
+            searchExplorar();
         }
     </script>
 </body>
